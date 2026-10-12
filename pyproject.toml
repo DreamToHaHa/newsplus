@@ -1,0 +1,17 @@
+[project]
+name = "newsplus"
+version = "0.1.0"
+description = "AI 源头信息每日推送：抓取、汇总并推送个人微信"
+requires-python = ">=3.12"
+dependencies = [
+    "feedparser>=6.0",
+    "requests>=2.31",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
