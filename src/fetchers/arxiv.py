@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import logging
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
 
 from ._util import fetch_bytes, now_utc, strip_html
@@ -82,12 +82,13 @@ def _parse_listing_date(text: str) -> datetime:
     arXiv headers look like '<h3>Mon, 12 Oct 2026 (showing first 50 ...)';
     falls back to now when absent or unparseable.
     """
-    m = re.search(r"<h3>([A-Z][a-z]{2}, \d{1,2} [A-Z][a-z]{2} \d{4})", text)
+    m = re.search(r"<h3[^>]*>([A-Z][a-z]{2}, \d{1,2} [A-Z][a-z]{2} \d{4})", text)
     if m:
         try:
-            parsed = parsedate_to_datetime(m.group(1))
-            if parsed.tzinfo is not None:
-                return parsed
+            # "Mon, 12 Oct 2026" has no time-of-day, so parsedate_to_datetime
+            # rejects it; strptime handles the bare date directly.
+            parsed = datetime.strptime(m.group(1), "%a, %d %b %Y").replace(tzinfo=timezone.utc)
+            return parsed
         except (TypeError, ValueError):
             pass
     logger.warning("could not parse arXiv listing date; using now")
