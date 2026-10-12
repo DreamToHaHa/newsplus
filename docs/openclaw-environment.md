@@ -41,6 +41,12 @@
 - 实际接入协议是 **`api: openai-responses`**（不是 anthropic-messages，也不是用户文档里的 `/api/plan` 路径）
 - baseUrl 用 `/api/plan/v3` 实测连通
 
+### 坑 6：微信主动投递的 context token 与大小写
+- 微信 iLink 的主动外发要求每条消息携带"接收者入站消息签发的 context token"；token 按 `(accountId, peer.toLowerCase())` 存储于 `~/.openclaw/openclaw-weixin/accounts/<acct>.context-tokens.json`
+- **发送给 iLink 的 `to_user_id` 用 `ctx.to` 原样（大小写敏感）**：配小写 id 会 `ret=-3 invalid arguments`（token 能查到但 iLink 不认）；必须用**原始大小写**形式（account userId，如 `<peer-id>@im.wechat`）
+- command payload 的 `--announce` 投递微信有 contextToken 限制（upstream #247），**推荐 agent-turn**（agent 在会话上下文发送）。见 ADR-0004
+- **更换微信账号/接收者时必须更新 automation 的 `delivery.to` 为新 id 的原始大小写形式**
+
 ## 备份文件（保留，勿删）
 
 位于 WSL `~` 下（确认长期稳定后可删）：
