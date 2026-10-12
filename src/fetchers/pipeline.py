@@ -34,24 +34,30 @@ def fetch_and_store(
     fetcher: Callable[[], bytes],
     parser: Callable[[bytes], list[Item]],
     store: JSONStore,
+    source: str | None = None,
 ) -> RunResult:
-    """Fetch raw bytes, parse to Items, store new ones."""
+    """Fetch raw bytes, parse to Items, store new ones.
+
+    `source` names the run when supplied (run_all passes it); otherwise the
+    first parsed Item's source is used. A failure always reports the given
+    source name.
+    """
     try:
         data = fetcher()
         items = parser(data)
     except Exception as exc:
         logger.exception("source run failed")
-        return RunResult(status="error", source=None, added=0, duplicate=0, error=str(exc))
+        return RunResult(status="error", source=source, added=0, duplicate=0, error=str(exc))
 
     try:
         added, duplicate = store.store(items)
     except Exception as exc:
         logger.exception("store write failed")
-        return RunResult(status="error", source=None, added=0, duplicate=0, error=str(exc))
+        return RunResult(status="error", source=source, added=0, duplicate=0, error=str(exc))
 
-    source = items[0].source if items else None
-    logger.info("run ok source=%s added=%d duplicate=%d", source, added, duplicate)
-    return RunResult(status="ok", source=source, added=added, duplicate=duplicate)
+    resolved = source if source is not None else (items[0].source if items else None)
+    logger.info("run ok source=%s added=%d duplicate=%d", resolved, added, duplicate)
+    return RunResult(status="ok", source=resolved, added=added, duplicate=duplicate)
 
 
 def export_items_json(items: list[Item], path: Path) -> None:

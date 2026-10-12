@@ -10,8 +10,8 @@ from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
 
 import feedparser
-import requests
 
+from ._util import fetch_bytes
 from .models import Item
 
 logger = logging.getLogger(__name__)
@@ -22,10 +22,7 @@ RSS_URL = "https://news.smol.ai/rss.xml"
 
 def fetch_smolai_rss(timeout: int = 20) -> bytes:
     """Fetch the raw smol.ai RSS feed over HTTP."""
-    logger.info("fetching %s", RSS_URL)
-    resp = requests.get(RSS_URL, timeout=timeout)
-    resp.raise_for_status()
-    return resp.content
+    return fetch_bytes(RSS_URL, timeout=timeout)
 
 
 def _parse_rfc822(value: str) -> datetime:

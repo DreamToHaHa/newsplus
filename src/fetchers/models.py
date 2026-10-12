@@ -17,6 +17,13 @@ class Item:
     published: datetime
     summary: str
     content: str = ""
+    dedup_key: str = ""
+
+    def __post_init__(self) -> None:
+        # Dedup identity defaults to the link; sources where several distinct
+        # items share one page URL (e.g. The Batch) override it.
+        if not self.dedup_key:
+            self.dedup_key = self.link
 
     def to_dict(self) -> dict:
         d = asdict(self)
@@ -32,4 +39,5 @@ class Item:
             published=datetime.fromisoformat(d["published"]),
             summary=d.get("summary", ""),
             content=d.get("content", ""),
+            dedup_key=d.get("dedup_key", ""),
         )

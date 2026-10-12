@@ -36,7 +36,7 @@ class JSONStore:
         except (json.JSONDecodeError, OSError, KeyError, ValueError):
             logger.exception("failed to load %s; starting empty", self._path)
             self._items = []
-        self._seen = {i.link for i in self._items}
+        self._seen = {i.dedup_key for i in self._items}
 
     def _save(self) -> None:
         self._path.parent.mkdir(parents=True, exist_ok=True)
@@ -63,10 +63,10 @@ class JSONStore:
         added = 0
         duplicate = 0
         for item in items:
-            if item.link in self._seen:
+            if item.dedup_key in self._seen:
                 duplicate += 1
                 continue
-            self._seen.add(item.link)
+            self._seen.add(item.dedup_key)
             self._items.append(item)
             added += 1
         if added:
