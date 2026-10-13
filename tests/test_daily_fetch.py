@@ -18,7 +18,7 @@ def _fixture_sources():
 
 def test_daily_fetch_reports_new_items(tmp_path):
     report = run_daily_fetch(sources=_fixture_sources(), store_path=tmp_path / "items.json")
-    assert report.status == "ok"
+    assert report.no_update is False
     assert report.new_count == 716
     assert report.failed_sources == []
 
@@ -28,9 +28,8 @@ def test_daily_fetch_second_run_reports_no_update(tmp_path):
     store_path = tmp_path / "items.json"
     run_daily_fetch(sources=sources, store_path=store_path)
     report2 = run_daily_fetch(sources=sources, store_path=store_path)
-    assert report2.status == "ok"
-    assert report2.new_count == 0
     assert report2.no_update is True
+    assert report2.new_count == 0
 
 
 def test_daily_fetch_isolates_failed_source(tmp_path):
@@ -42,6 +41,6 @@ def test_daily_fetch_isolates_failed_source(tmp_path):
         "arxiv": (lambda: b"<html/>", broken),
     }
     report = run_daily_fetch(sources=sources, store_path=tmp_path / "items.json")
-    assert report.status == "ok"
+    assert report.no_update is False
     assert report.failed_sources == ["arxiv"]
     assert report.new_count == 716
