@@ -24,6 +24,8 @@ from src.daily.fetch import (
     log_failures_to_file,
     run_daily_fetch,
 )
+from src.daily.filter import filter_items_for_push
+from src.daily.preferences import load_preferences
 from src.daily.summarize import chunk_for_wechat, summarize
 from src.fetchers.models import Item
 from src.fetchers.sources import ALL_SOURCES
@@ -96,6 +98,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--store", default="data/items.json")
     parser.add_argument("--digest", default="data/digest.json")
     parser.add_argument("--failure-log", default="data/daily-errors.log")
+    parser.add_argument("--preferences", default="data/preferences.json")
     parser.add_argument("--openclaw-json", default="/home/<user>/.openclaw/openclaw.json")
     parser.add_argument("--run-date", default=None, help="YYYY-MM-DD (defaults to today)")
     parser.add_argument("-v", "--verbose", action="store_true")
@@ -120,18 +123,41 @@ def main(argv: list[str] | None = None) -> int:
             print(chunk, flush=True)
         return 0
 
-    # Summarize the new items via the Volcano model.
+    # Apply user preferences (GLOSSARY: 过滤) before summarizing — fetch stays
+    # full; only the push view is filtered. A prefs load/filter failure is its
+    # own error, not a summarize failure.
+    try:
+        prefs = load_preferences(Path(args.preferences))
+        items = _recent_new_items(store_path)
+        kept, filtered = filter_items_for_push(items, prefs)
+    except Exception as exc:
+        logger.exception("preferences/filter failed")
+        print(f"ERROR preferences failed: {exc}", flush=True)
+        return 3
+
+    if filtered:
+        logger.info("filtered %d items by preferences", len(filtered))
+
+    # When everything new got filtered out, emit the no-update path rather
+    # than a digest of an empty kept list.
+    if not kept:
+        chunks = compose_delivery_text(report=report, no_update_note=no_update_message())
+        print("NONE", flush=True)
+        for chunk in chunks:
+            print(chunk, flush=True)
+        return 0
+
+    # Summarize the kept items via the Volcano model.
     try:
         provider = _load_provider(Path(args.openclaw_json))
-        items = _recent_new_items(store_path)
-        text = summarize(items=items, run_date=run_date, **provider)
+        text = summarize(items=kept, run_date=run_date, **provider)
     except Exception as exc:
         logger.exception("summarize failed")
         print(f"ERROR summarize failed: {exc}", flush=True)
         return 3
 
     chunks = compose_delivery_text(report=report, digest_text=text)
-    print(f"NEW {report.new_count}", flush=True)
+    print(f"NEW {len(kept)}", flush=True)
     for chunk in chunks:
         print(chunk, flush=True)
     return 0
