@@ -15,6 +15,7 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import os
 import sys
 from pathlib import Path
 
@@ -152,7 +153,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--digest", default="data/digest.json")
     parser.add_argument("--failure-log", default="data/daily-errors.log")
     parser.add_argument("--preferences", default="data/preferences.json")
-    parser.add_argument("--openclaw-json", default="/home/<user>/.openclaw/openclaw.json")
+    parser.add_argument(
+        "--openclaw-json",
+        default=str(Path(os.path.expanduser("~")) / ".openclaw" / "openclaw.json"),
+    )
     parser.add_argument("--mailpush-config", default=str(MAILPUSH_CONFIG_DEFAULT))
     parser.add_argument("--mode", choices=["email", "stdout"], default="email")
     parser.add_argument("--run-date", default=None, help="YYYY-MM-DD (defaults to today)")

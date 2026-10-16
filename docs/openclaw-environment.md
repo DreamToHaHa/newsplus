@@ -5,9 +5,9 @@
 ## 运行状态（2026-10-12 验证）
 
 - **版本**：`OpenClaw 2026.9.4 (3a9d69d)` — 注意：**非最新版**，为微信插件兼容而降级
-- **位置**：WSL2 Ubuntu，用户 `<user>`，npm 全局安装于 `~/.nvm/versions/node/v24.18.0/bin/openclaw`
+- **位置**：WSL2 Ubuntu，npm 全局安装于 `~/.nvm/versions/node/v24.18.0/bin/openclaw`
 - **Gateway**：systemd 用户服务 `openclaw-gateway` running，端口 18789
-- **微信渠道**：`openclaw-weixin`（社区版 3.2.3）enabled/running，账号 `<bot-account-id>`
+- **微信渠道**：`openclaw-weixin`（社区版 3.2.3）enabled/running，账号 id 见本地 `openclaw.json`（已脱敏）
 - **默认模型**：`volcengine-agent-plan/deepseek-v4.1-flash`
 - **兜底模型**：`volcengine-agent-plan/ark-code-latest`
 - **Provider**：`volcengine-agent-plan`，baseUrl `https://ark.cn-beijing.volces.com/api/plan/v3`，协议 `api: openai-responses`
@@ -43,7 +43,7 @@
 
 ### 坑 6：微信主动投递的 context token 与大小写
 - 微信 iLink 的主动外发要求每条消息携带"接收者入站消息签发的 context token"；token 按 `(accountId, peer.toLowerCase())` 存储于 `~/.openclaw/openclaw-weixin/accounts/<acct>.context-tokens.json`
-- **发送给 iLink 的 `to_user_id` 用 `ctx.to` 原样（大小写敏感）**：配小写 id 会 `ret=-3 invalid arguments`（token 能查到但 iLink 不认）；必须用**原始大小写**形式（account userId，如 `<peer-id>@im.wechat`）
+- **发送给 iLink 的 `to_user_id` 用 `ctx.to` 原样（大小写敏感）**：配小写 id 会 `ret=-3 invalid arguments`（token 能查到但 iLink 不认）；必须用**原始大小写**形式（account userId，形如 `<peer-id>@im.wechat`）
 - command payload 的 `--announce` 投递微信有 contextToken 限制（upstream #247），**推荐 agent-turn**（agent 在会话上下文发送）。见 ADR-0004
 - **更换微信账号/接收者时必须更新 automation 的 `delivery.to` 为新 id 的原始大小写形式**
 

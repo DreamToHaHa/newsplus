@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import smtplib
 import ssl
 from email.header import Header
@@ -20,7 +21,11 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-MAILPUSH_CONFIG_DEFAULT = Path("/home/<user>/.openclaw-mailpush/config.json")
+# mailpush config location, resolved from $HOME so no username is hardcoded.
+MAILPUSH_CONFIG_DEFAULT = Path(
+    os.environ.get("MAILPUSH_CONFIG")
+    or (Path(os.path.expanduser("~")) / ".openclaw-mailpush" / "config.json")
+)
 
 
 def load_mailpush_config(config_path: Path) -> tuple[dict, list[str]]:

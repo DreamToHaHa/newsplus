@@ -8,7 +8,7 @@
 
 2. **大小写敏感**（最终根因）：插件的 context token 存储 key 使用小写（`contextTokenKey` 内部 `toLowerCase()`），但**发给 iLink 的 `to_user_id` 是 `ctx.to` 原样**，iLink 端要求精确匹配接收者 id 的大小写。配置成小写 `to` 时 token 能查到但 iLink 报 `ret=-3`；配置成**大写原始形式**（bot 收到的 `from_user_id` 原样）后投递成功。
 
-**Decision**：automation 使用 agent-turn（`--message`）payload，`delivery.to` 配置为接收者的原始大小写 id（`<peer-id>@im.wechat`，即 account userId 形式），`delivery.accountId` 为 `<bot-account-id>`。验证：run :4 `completion=succeeded, delivered=True`。
+**Decision**：automation 使用 agent-turn（`--message`）payload，`delivery.to` 配置为接收者的原始大小写 id（形如 `<peer-id>@im.wechat`，即 account userId 形式），`delivery.accountId` 为 bot 账号 id。验证：run :4 `completion=succeeded, delivered=True`。
 
 **Consequences**：
 - 日报生成逻辑（抓取、汇总、排版）仍是脚本（ADR-0001），agent 负责"执行脚本 + 在会话中输出结果"，并对超长日报分块发送。
