@@ -11,8 +11,9 @@ set -uo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repo_root" || exit 1
 
-# Tracked files, excluding test fixtures (they contain real sample HTML).
-files=$(git ls-files -- ':(exclude)tests/fixtures/*')
+# Tracked files, excluding test fixtures (they contain real sample HTML) and
+# this script itself (its pattern strings would self-match).
+files=$(git ls-files -- ':(exclude)tests/fixtures/*' ':(exclude)scripts/scan-secrets.sh')
 
 fail=0
 
@@ -40,7 +41,7 @@ scan "secret assignment"       '(password|passwd|secret|token|api[_-]?key)\s*[:=
 # Real corporate / personal email domains (not example.com).
 scan "real email domain"       '@(qq|gmail|outlook|163|126|servyou)\.[a-z]+'
 # WeChat peer / bot identifiers.
-scan "WeChat identifier"       '[a-z0-9]{12,}@im\.wechat|im-bot'
+scan "WeChat identifier"       '[a-z0-9]{12,}@im\.wechat|[a-f0-9]{8,}-im-bot'
 # Long bearer tokens.
 scan "bearer token"            'Bearer [A-Za-z0-9._-]{20,}'
 
